@@ -67,17 +67,21 @@ class HomePageState extends State<HomePage> {
                 _persistentLocalStorage.setBool('isSynced', true);
                 return new MosquesList(mosquesList: _mosquesList);
               } else {
-                // _getData(_rePopulate);
-                // return new MosquesList(mosquesList: _mosquesList);
+                if (_mosquesList.isNotEmpty) {
+                  return new MosquesList(mosquesList: _mosquesList);
+                } else {
+                  return new Center(child: const CircularProgressIndicator());
+                }
 
-                return new FutureBuilder(
-                  future: _dbContext.getDataFromDatabase(),
-                  builder: (BuildContext context, AsyncSnapshot snapshot) {
-                    return snapshot.hasData
-                        ? new MosquesList(mosquesList: snapshot.data)
-                        : new MosquesList(mosquesList: snapshot.data);
-                  },
-                );
+                // return new FutureBuilder(
+                //   future: _dbContext.getDataFromDatabase(),
+                //   builder: (BuildContext context, AsyncSnapshot snapshot)
+                //   {
+                //     return snapshot.hasData
+                //         ? new MosquesList(mosquesList: snapshot.data)
+                //         : new CircularProgressIndicator();
+                //   },
+                // );
               }
             }),
       ),
@@ -113,14 +117,21 @@ class HomePageState extends State<HomePage> {
                     context: context,
                     builder: (context) => new AlertDialog(
                           title: Text('Success'),
+                          content: new SingleChildScrollView(
+                            child: new ListBody(
+                              children: <Widget>[
+                                new Text('Up to date jamaat timings synced.'),
+                              ],
+                            ),
+                          ),
                           actions: <Widget>[
                             FlatButton(
                               child: Text('Ok'),
                               onPressed: () {
-                                // setState(() {
-                                //   _isLoading = false;
-                                // });
                                 Navigator.pop(context);
+                                setState(() {
+                                  _isLoading = false;
+                                });
                               },
                             )
                           ],
@@ -155,16 +166,6 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  _getData(bool rePopulate) async {
-    if (rePopulate) {
-      _mosquesList = await _dbContext.getDataFromDatabase();
-      setState(() {
-        _rePopulate = false;
-      });
-    }
-    return Center(child: const CircularProgressIndicator());
-  }
-
   Future<Null> getSharedPrefs() async {
     _persistentLocalStorage = await SharedPreferences.getInstance();
     _createTable = _persistentLocalStorage.getBool('createTable');
@@ -177,6 +178,13 @@ class HomePageState extends State<HomePage> {
     if (_isSynced == null) {
       _persistentLocalStorage.setBool('isSynced', false);
       _isSynced = false;
+    }
+    if (_isSynced) {
+      var x = await _dbContext.getDataFromDatabase();
+      setState(() {
+        _mosquesList.clear();
+        _mosquesList = x;
+      });
     }
   }
 }

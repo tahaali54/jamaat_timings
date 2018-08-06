@@ -33,7 +33,7 @@ class MosqueDetail {
 
 class DatabaseManager {
   DatabaseManager() {
-    _initDatabase();
+    //_initDatabase();
   }
   String _databasePath;
   Database database;
@@ -49,6 +49,7 @@ class DatabaseManager {
   insertDataInDatabase(
       List<MosqueDetail> _mosquesList, bool createTable) async {
     try {
+      await _initDatabase();
       if (createTable)
        {
         database.execute('CREATE TABLE Mosques (id INTEGER PRIMARY KEY, ' +
@@ -89,6 +90,7 @@ class DatabaseManager {
   }
 
   Future<List<MosqueDetail>> getDataFromDatabase() async {
+    await _initDatabase();
     List<MosqueDetail> _mosquesList = <MosqueDetail>[];
     List<Map> list = await database.rawQuery('SELECT * FROM Mosques');
     list.forEach((item) 
