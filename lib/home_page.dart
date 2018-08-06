@@ -1,11 +1,12 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:jamaat_timings/controls.dart';
-import 'package:jamaat_timings/global.dart';
 import 'package:jamaat_timings/models.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:jamaat_timings/controls.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:jamaat_timings/global.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -15,20 +16,24 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
-  bool _isLoading = false;
-  SharedPreferences prefs;
+  DatabaseManager _dbContext;
+  SharedPreferences _persistentLocalStorage;
+  List<MosqueDetail> _mosquesList;
   bool _isSynced;
-
-  Future<Null> getSharedPrefs() async {
-    prefs = await SharedPreferences.getInstance();
-    _isSynced = prefs.get('isSynced' ?? false);
-  }
+  bool _createTable;
+  bool _rePopulate;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
+    _dbContext = DatabaseManager();
+    _mosquesList = <MosqueDetail>[];
+    _createTable = true;
     _isSynced = false;
-    //getSharedPrefs();
+    _rePopulate = true;
+    //checking if data from Firestore has been synced previously.
+    getSharedPrefs();
   }
 
   @override
@@ -39,33 +44,41 @@ class HomePageState extends State<HomePage> {
         child: StreamBuilder(
             stream: Firestore.instance.collection('mosques').snapshots(),
             builder: (context, snapshot) {
-              List<MosqueDetail> mosqueDetails = <MosqueDetail>[];
-              if (!snapshot.hasData) return const Text('Loading...');
-              else {
+              if (!snapshot.hasData)
+                return Center(child: const CircularProgressIndicator());
+              else if (!_isSynced) {
+                _mosquesList.clear();
                 for (int i = 0; i < snapshot.data.documents.length; i++) {
                   DocumentSnapshot document = snapshot.data.documents[i];
-                  mosqueDetails.add(MosqueDetail(
+                  _mosquesList.add(MosqueDetail(
                       name: document['name'],
-                      briefAddr: document['briefAddr'],
                       imageUrl: document['image'],
+                      briefAddr: document['briefAddr'],
                       addressLine1: document['addressLine1'],
-                      addressLine2: document['addressLine2']));
+                      addressLine2: document['addressLine2'],
+                      fajr: document['fajr'],
+                      zuhar: document['zuhar'],
+                      asar: document['asar'],
+                      maghrib: document['maghrib'],
+                      isha: document['isha'],
+                      extra: document['extra']));
                 }
-                //prefs.setBool('isSynced', true);
-                return new ListView(
-                  itemExtent: MosquesListItem.height,
-                  padding:
-                      const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
-                  children: mosqueDetails.map((MosqueDetail detail) {
-                    return new Container(
-                      margin: const EdgeInsets.only(bottom: 8.0),
-                      child: new MosquesListItem(
-                        mosqueDetail: detail,
-                      ),
-                    );
-                  }).toList());
+                _dbContext.insertDataInDatabase(_mosquesList, _createTable);
+                _persistentLocalStorage.setBool('isSynced', true);
+                return new MosquesList(mosquesList: _mosquesList);
+              } else {
+                // _getData(_rePopulate);
+                // return new MosquesList(mosquesList: _mosquesList);
+
+                return new FutureBuilder(
+                  future: _dbContext.getDataFromDatabase(),
+                  builder: (BuildContext context, AsyncSnapshot snapshot) {
+                    return snapshot.hasData
+                        ? new MosquesList(mosquesList: snapshot.data)
+                        : new MosquesList(mosquesList: snapshot.data);
+                  },
+                );
               }
-              
             }),
       ),
       drawer: Drawer(
@@ -92,9 +105,26 @@ class HomePageState extends State<HomePage> {
                       : new Container()),
               onTap: () {
                 setState(() {
-                  _isLoading ? _isLoading = false : _isLoading = true;
+                  _isLoading = true;
+                  _persistentLocalStorage.setBool('isSynced', false);
+                  _isSynced = false;
                 });
-                //Navigator.pop(context);
+                showDialog(
+                    context: context,
+                    builder: (context) => new AlertDialog(
+                          title: Text('Success'),
+                          actions: <Widget>[
+                            FlatButton(
+                              child: Text('Ok'),
+                              onPressed: () {
+                                // setState(() {
+                                //   _isLoading = false;
+                                // });
+                                Navigator.pop(context);
+                              },
+                            )
+                          ],
+                        ));
               },
             ),
             ListTile(
@@ -125,7 +155,53 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  _fetchPreferences() async {
-    prefs = await SharedPreferences.getInstance();
+  _getData(bool rePopulate) async {
+    if (rePopulate) {
+      _mosquesList = await _dbContext.getDataFromDatabase();
+      setState(() {
+        _rePopulate = false;
+      });
+    }
+    return Center(child: const CircularProgressIndicator());
+  }
+
+  Future<Null> getSharedPrefs() async {
+    _persistentLocalStorage = await SharedPreferences.getInstance();
+    _createTable = _persistentLocalStorage.getBool('createTable');
+    _isSynced = _persistentLocalStorage.getBool('isSynced');
+    if (_createTable == null) {
+      _persistentLocalStorage.setBool('createTable', true);
+      _createTable = true;
+    }
+    //if this is the first time app is launching the bool '_isSynced' will be set as null.
+    if (_isSynced == null) {
+      _persistentLocalStorage.setBool('isSynced', false);
+      _isSynced = false;
+    }
+  }
+}
+
+class MosquesList extends StatelessWidget {
+  const MosquesList({
+    Key key,
+    @required List<MosqueDetail> mosquesList,
+  })  : _mosquesList = mosquesList,
+        super(key: key);
+
+  final List<MosqueDetail> _mosquesList;
+
+  @override
+  Widget build(BuildContext context) {
+    return new ListView(
+        itemExtent: MosquesListItem.height,
+        padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
+        children: _mosquesList.map((MosqueDetail detail) {
+          return new Container(
+            margin: const EdgeInsets.only(bottom: 8.0),
+            child: new MosquesListItem(
+              mosqueDetail: detail,
+            ),
+          );
+        }).toList());
   }
 }

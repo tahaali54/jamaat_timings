@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:jamaat_timings/models.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class MosquesListItem extends StatelessWidget {
   MosquesListItem({
@@ -34,8 +35,7 @@ class MosquesListItem extends StatelessWidget {
                   children: <Widget>[
                     new Positioned.fill(
                       child: new Image(
-                        image: NetworkImage(
-                            mosqueDetail.imageUrl),
+                        image: new CachedNetworkImageProvider(mosqueDetail.imageUrl),
                         fit: BoxFit.cover,
                       ),
                     ),
