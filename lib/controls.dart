@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:jamaat_timings/models.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:jamaat_timings/timings_page.dart';
 
 class MosquesListItem extends StatelessWidget {
   MosquesListItem({
@@ -95,7 +96,10 @@ class MosquesListItem extends StatelessWidget {
                     new FlatButton(
                       child: const Text('TIMINGS'),
                       textColor: Theme.of(context).accentColor,
-                      onPressed: () {/* do nothing */},
+                      onPressed: () {
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (context) => TimingsPage(mosqueDetails: mosqueDetail)),);
+                      },
                     ),
                   ],
                 ),

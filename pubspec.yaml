@@ -39,6 +39,11 @@ flutter:
 
   assets:
     - assets/img_background.jpg
+    - assets/ic_dawn.png
+    - assets/ic_sun.png
+    - assets/ic_cloudy.png
+    - assets/ic_sunset.png
+    - assets/ic_moon.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
