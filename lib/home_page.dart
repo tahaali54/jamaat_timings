@@ -43,7 +43,8 @@ class HomePageState extends State<HomePage> {
       body: new Container(
         child: StreamBuilder(
             stream: Firestore.instance.collection('mosques').snapshots(),
-            builder: (context, snapshot) {
+            builder: (context, snapshot) 
+            {
               if (!snapshot.hasData)
                 return Center(child: const CircularProgressIndicator());
               else if (!_isSynced) {
@@ -63,8 +64,10 @@ class HomePageState extends State<HomePage> {
                       isha: document['isha'],
                       extra: document['extra']));
                 }
-                _dbContext.insertDataInDatabase(_mosquesList, _createTable);
                 _persistentLocalStorage.setBool('isSynced', true);
+                _isSynced = true;
+                _dbContext.insertDataInDatabase(_mosquesList, _createTable);
+                _createTable = false;
                 return new MosquesList(mosquesList: _mosquesList);
               } else {
                 if (_mosquesList.isNotEmpty) {
