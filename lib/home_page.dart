@@ -69,8 +69,10 @@ class HomePageState extends State<HomePage> {
                       isha: document['isha'],
                       extra: document['extra']));
                 }
-                _dbContext.insertDataInDatabase(_mosquesList, _createTable);
                 _persistentLocalStorage.setBool('isSynced', true);
+                _isSynced = true;
+                _dbContext.insertDataInDatabase(_mosquesList, _createTable);
+                _createTable = false;
                 return new MosquesList(
                     mosquesList: _mosquesList, isAdmin: _isAdmin);
               } else {

@@ -13,7 +13,27 @@ class TimingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    List<ListTile> listItems = <ListTile>[
+    Iterable<Widget> listItems = ListTile.divideTiles(
+        context: context,
+        tiles: populateCardData(),
+        color: Theme.of(context).accentColor);
+    return new Scaffold(
+      appBar: new AppBar(title: new Text(_mosqueDetails.name)),
+      body: Container(
+        padding: const EdgeInsets.all(16.0),
+        child: Card(
+          child: ListView(
+            shrinkWrap: true,
+            padding: const EdgeInsets.all(8.0),
+            children: listItems.toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Iterable<Widget> populateCardData() {
+    return <Widget>[
       ListTile(
           leading: ImageIcon(AssetImage("assets/ic_dawn.png")),
           title: Text('Fajr'),
@@ -35,12 +55,5 @@ class TimingsPage extends StatelessWidget {
           title: Text('Isha'),
           trailing: Text(_mosqueDetails.isha)),
     ];
-    var x = ListTile.divideTiles(context: context, tiles: listItems, color: Theme.of(context).accentColor).toList();
-    return new Scaffold(
-      appBar: new AppBar(title: new Text(_mosqueDetails.name)),
-      body: ListView(
-        children: x,
-      ),
-    );
   }
 }
