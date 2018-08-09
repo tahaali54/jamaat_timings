@@ -19,9 +19,9 @@ class HomePageState extends State<HomePage> {
   DatabaseManager _dbContext;
   SharedPreferences _persistentLocalStorage;
   List<MosqueDetail> _mosquesList;
+  bool _isAdmin;
   bool _isSynced;
   bool _createTable;
-  bool _rePopulate;
   bool _isLoading = false;
 
   @override
@@ -31,7 +31,7 @@ class HomePageState extends State<HomePage> {
     _mosquesList = <MosqueDetail>[];
     _createTable = true;
     _isSynced = false;
-    _rePopulate = true;
+    _isAdmin = false;
     //checking if data from Firestore has been synced previously.
     initLocalStorage();
   }
@@ -39,6 +39,12 @@ class HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
+      floatingActionButton: _isAdmin
+          ? FloatingActionButton(
+              child: Icon(Icons.add),
+              onPressed: () {},
+            )
+          : null,
       appBar: new AppBar(title: new Text("Jamaat Timings")),
       body: new Container(
         child: StreamBuilder(
@@ -65,10 +71,12 @@ class HomePageState extends State<HomePage> {
                 }
                 _dbContext.insertDataInDatabase(_mosquesList, _createTable);
                 _persistentLocalStorage.setBool('isSynced', true);
-                return new MosquesList(mosquesList: _mosquesList);
+                return new MosquesList(
+                    mosquesList: _mosquesList, isAdmin: _isAdmin);
               } else {
                 if (_mosquesList.isNotEmpty) {
-                  return new MosquesList(mosquesList: _mosquesList);
+                  return new MosquesList(
+                      mosquesList: _mosquesList, isAdmin: _isAdmin);
                 } else {
                   return new Center(child: const CircularProgressIndicator());
                 }
@@ -114,7 +122,7 @@ class HomePageState extends State<HomePage> {
                           content: new SingleChildScrollView(
                             child: new ListBody(
                               children: <Widget>[
-                                new Text('Up to date jamaat timings synced.'),
+                                new Text('Up to date timings synced.'),
                               ],
                             ),
                           ),
@@ -142,8 +150,14 @@ class HomePageState extends State<HomePage> {
             ListTile(
               leading: new Icon(Icons.supervised_user_circle),
               title: Text('Administrator Access'),
+              trailing: Switch(
+                value: _isAdmin,
+                onChanged: (bool _changedValue) {
+                  _toggelAdminAccess(context, _changedValue);
+                },
+              ),
               onTap: () {
-                Navigator.pop(context);
+                _toggelAdminAccess(context, !_isAdmin);
               },
             ),
             Divider(),
@@ -158,6 +172,44 @@ class HomePageState extends State<HomePage> {
         ),
       ),
     );
+  }
+
+  _toggelAdminAccess(BuildContext context, bool _changedValue) {
+    TextEditingController _passwordEditingController =
+        new TextEditingController();
+    if (_changedValue)
+      showDialog(
+          context: context,
+          builder: (context) => new AlertDialog(
+                content: new SingleChildScrollView(
+                  child: new ListBody(
+                    children: <Widget>[
+                      TextField(
+                        keyboardType: TextInputType.number,
+                        obscureText: true,
+                        controller: _passwordEditingController,
+                        decoration: InputDecoration(hintText: 'Enter password'),
+                      ),
+                    ],
+                  ),
+                ),
+                actions: <Widget>[
+                  FlatButton(
+                    child: Text('Submit'),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      if (_passwordEditingController.text == '8242')
+                        setState(() {
+                          _isAdmin = _changedValue;
+                        });
+                    },
+                  )
+                ],
+              ));
+    else
+      setState(() {
+        _isAdmin = _changedValue;
+      });
   }
 
   Future<Null> initLocalStorage() async {
@@ -198,8 +250,7 @@ class CircleAvatarWithShadow extends StatelessWidget {
           radius: 32.0,
           child: new Text(
             'JT',
-            style: TextStyle(
-                fontWeight: FontWeight.bold, fontSize: 24.0),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24.0),
           )),
       decoration: new BoxDecoration(
         boxShadow: [
@@ -215,13 +266,16 @@ class CircleAvatarWithShadow extends StatelessWidget {
 }
 
 class MosquesList extends StatelessWidget {
-  const MosquesList({
-    Key key,
-    @required List<MosqueDetail> mosquesList,
-  })  : _mosquesList = mosquesList,
+  const MosquesList(
+      {Key key,
+      @required List<MosqueDetail> mosquesList,
+      @required bool isAdmin})
+      : _mosquesList = mosquesList,
+        _isAdmin = isAdmin,
         super(key: key);
 
   final List<MosqueDetail> _mosquesList;
+  final bool _isAdmin;
 
   @override
   Widget build(BuildContext context) {
@@ -233,6 +287,7 @@ class MosquesList extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 8.0),
             child: new MosquesListItem(
               mosqueDetail: detail,
+              isAdmin: _isAdmin,
             ),
           );
         }).toList());

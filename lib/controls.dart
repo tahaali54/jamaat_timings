@@ -6,11 +6,12 @@ import 'package:jamaat_timings/timings_page.dart';
 
 class MosquesListItem extends StatelessWidget {
   MosquesListItem({
-    Key key, @required this.mosqueDetail
+    Key key, @required this.mosqueDetail, @required this.isAdmin
   }) : super(key: key);
 
   static const double height = 366.0;
   final MosqueDetail mosqueDetail;
+  final bool isAdmin;
 
   @override
   Widget build(BuildContext context) {
@@ -101,6 +102,7 @@ class MosquesListItem extends StatelessWidget {
                             MaterialPageRoute(builder: (context) => TimingsPage(mosqueDetails: mosqueDetail)),);
                       },
                     ),
+                    isAdmin ? IconButton(onPressed: (){}, icon: Icon(Icons.publish)) : null,
                   ],
                 ),
               ),
