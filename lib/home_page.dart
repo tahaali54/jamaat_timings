@@ -33,7 +33,7 @@ class HomePageState extends State<HomePage> {
     _isSynced = false;
     _rePopulate = true;
     //checking if data from Firestore has been synced previously.
-    getSharedPrefs();
+    initLocalStorage();
   }
 
   @override
@@ -72,16 +72,6 @@ class HomePageState extends State<HomePage> {
                 } else {
                   return new Center(child: const CircularProgressIndicator());
                 }
-
-                // return new FutureBuilder(
-                //   future: _dbContext.getDataFromDatabase(),
-                //   builder: (BuildContext context, AsyncSnapshot snapshot)
-                //   {
-                //     return snapshot.hasData
-                //         ? new MosquesList(mosquesList: snapshot.data)
-                //         : new CircularProgressIndicator();
-                //   },
-                // );
               }
             }),
       ),
@@ -90,7 +80,11 @@ class HomePageState extends State<HomePage> {
           padding: EdgeInsets.zero,
           children: <Widget>[
             DrawerHeader(
-              child: null,
+              child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    new CircleAvatarWithShadow(),
+                  ]),
               decoration: BoxDecoration(
                 image: new DecorationImage(
                   image: new AssetImage("assets/img_background.jpg"),
@@ -166,7 +160,7 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Future<Null> getSharedPrefs() async {
+  Future<Null> initLocalStorage() async {
     _persistentLocalStorage = await SharedPreferences.getInstance();
     _createTable = _persistentLocalStorage.getBool('createTable');
     _isSynced = _persistentLocalStorage.getBool('isSynced');
@@ -186,6 +180,37 @@ class HomePageState extends State<HomePage> {
         _mosquesList = x;
       });
     }
+  }
+}
+
+class CircleAvatarWithShadow extends StatelessWidget {
+  const CircleAvatarWithShadow({
+    Key key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return new Container(
+      margin: const EdgeInsets.only(right: 16.0),
+      child: new CircleAvatar(
+          foregroundColor: Colors.white,
+          backgroundColor: Theme.of(context).accentColor,
+          radius: 32.0,
+          child: new Text(
+            'JT',
+            style: TextStyle(
+                fontWeight: FontWeight.bold, fontSize: 24.0),
+          )),
+      decoration: new BoxDecoration(
+        boxShadow: [
+          new BoxShadow(
+            color: Colors.black,
+            blurRadius: 10.0,
+          ),
+        ],
+        shape: BoxShape.circle,
+      ),
+    );
   }
 }
 
