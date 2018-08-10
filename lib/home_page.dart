@@ -4,9 +4,6 @@ import 'package:jamaat_timings/models.dart';
 import 'package:jamaat_timings/controls.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:jamaat_timings/global.dart';
 
 class HomePage extends StatefulWidget {
   @override

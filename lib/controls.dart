@@ -89,11 +89,21 @@ class MosquesListItem extends StatelessWidget {
                 child: new ButtonBar(
                   alignment: MainAxisAlignment.start,
                   children: <Widget>[
+                    isAdmin ? FlatButton(
+                      child: const Text('DELETE'),
+                      textColor: Theme.of(context).accentColor,
+                      onPressed: () {/* do nothing */},
+                    ) :
                     new FlatButton(
                       child: const Text('LOCATE'),
                       textColor: Theme.of(context).accentColor,
                       onPressed: () {/* do nothing */},
                     ),
+                    isAdmin ? FlatButton(
+                      child: const Text('UPDATE'),
+                      textColor: Theme.of(context).accentColor,
+                      onPressed: () {/* do nothing */},
+                    ) :
                     new FlatButton(
                       child: const Text('TIMINGS'),
                       textColor: Theme.of(context).accentColor,
@@ -102,7 +112,6 @@ class MosquesListItem extends StatelessWidget {
                             MaterialPageRoute(builder: (context) => TimingsPage(mosqueDetails: mosqueDetail)),);
                       },
                     ),
-                    isAdmin ? IconButton(onPressed: (){}, icon: Icon(Icons.publish)) : null,
                   ],
                 ),
               ),
