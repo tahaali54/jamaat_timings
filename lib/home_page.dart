@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:jamaat_timings/models.dart';
 import 'package:jamaat_timings/controls.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:jamaat_timings/update_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
@@ -39,7 +40,10 @@ class HomePageState extends State<HomePage> {
       floatingActionButton: _isAdmin
           ? FloatingActionButton(
               child: Icon(Icons.add),
-              onPressed: () {},
+              onPressed: () {
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (context) => UpdatePage(pageTitle: 'Create Page')),);
+                      },
             )
           : null,
       appBar: new AppBar(title: new Text("Jamaat Timings")),
