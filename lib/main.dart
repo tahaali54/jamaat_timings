@@ -20,7 +20,8 @@ class JamaatTimings extends StatelessWidget {
       theme: new ThemeData(
           primaryColor: _primaryColor,
           accentColor: _accentColor,
-          buttonColor: _primaryColor),
+          buttonColor: _primaryColor, 
+          inputDecorationTheme: InputDecorationTheme(border: OutlineInputBorder())),
     );
   }
 }

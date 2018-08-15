@@ -42,7 +42,7 @@ class HomePageState extends State<HomePage> {
               child: Icon(Icons.add),
               onPressed: () {
                         Navigator.push(context,
-                            MaterialPageRoute(builder: (context) => UpdatePage(pageTitle: 'Create Page')),);
+                            MaterialPageRoute(builder: (context) => UpdatePage(isUpdate: false, pageTitle: 'Create Page')),);
                       },
             )
           : null,

@@ -1,80 +1,167 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:jamaat_timings/models.dart';
 
 class UpdatePage extends StatelessWidget {
-  const UpdatePage({
-    Key key,
-    @required String pageTitle,
-  })  : _pageTitle = pageTitle,
+  const UpdatePage(
+      {Key key,
+      @required String pageTitle,
+      MosqueDetail mosqueDetail,
+      @required bool isUpdate})
+      : _pageTitle = pageTitle,
+        _isUpdate = isUpdate,
+        _mosqueDetail = mosqueDetail,
         super(key: key);
 
   final String _pageTitle;
+  final bool _isUpdate;
+  final MosqueDetail _mosqueDetail;
 
   @override
   Widget build(BuildContext context) {
-    Iterable<Widget> listItems = ListTile.divideTiles(
-        context: context,
-        tiles: populateData(),
-        color: Theme.of(context).accentColor);
     return new Scaffold(
       appBar: new AppBar(title: new Text(_pageTitle)),
-      body: ListView(
-        children: listItems.toList(),
-      ),
+      body: MosqueDetailForm(_isUpdate, _mosqueDetail),
+    );
+  }
+}
+
+class MosqueDetailForm extends StatefulWidget {
+  MosqueDetailForm(this._isUpdate, this._mosqueDetail);
+  final bool _isUpdate;
+  final MosqueDetail _mosqueDetail;
+
+  @override
+  MosqueDetailFormState createState() {
+    return MosqueDetailFormState();
+  }
+}
+
+class MosqueDetailFormState extends State<MosqueDetailForm> {
+  final _formKey = GlobalKey<FormState>();
+  TextEditingController _fajarController = TextEditingController();
+  TextEditingController _zuharController = TextEditingController();
+  TextEditingController _asarController = TextEditingController();
+  TextEditingController _maghribController = TextEditingController();
+  TextEditingController _ishaController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget._isUpdate) {
+      _fajarController.text = widget._mosqueDetail.fajr;
+      _zuharController.text = widget._mosqueDetail.zuhar;
+      _asarController.text = widget._mosqueDetail.asar;
+      _maghribController.text = widget._mosqueDetail.maghrib;
+      _ishaController.text = widget._mosqueDetail.isha;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: _formKey,
+      child: ListView(
+          padding: EdgeInsets.only(top: 16.0),
+          children: _populateData().toList()),
     );
   }
 
-  Iterable<Widget> populateData() {
-    TextEditingController _fajarController = TextEditingController();
-    TextEditingController _zuharController = TextEditingController();
-    TextEditingController _asarController = TextEditingController();
-    TextEditingController _maghribController = TextEditingController();
-    TextEditingController _ishaController = TextEditingController();
+  String _validateTimings(String value) {
+    if (value.isEmpty) {
+      return 'Please enter some text';
+    }
+    return null;
+  }
+
+  Iterable<Widget> _populateData() {
     return <Widget>[
       ListTile(
         leading: ImageIcon(AssetImage("assets/ic_dawn.png")),
-        title: TextField(
-          keyboardType: TextInputType.text,
-          obscureText: true,
+        title: TextFormField(
           controller: _fajarController,
-          decoration: InputDecoration(hintText: 'fajar'),
+          decoration: InputDecoration(
+              labelText: 'Fajr', hintText: 'Enter timings (e.g. 5:30 am)'),
+          validator: (value) => _validateTimings(value),
         ),
       ),
       ListTile(
         leading: ImageIcon(AssetImage("assets/ic_sun.png")),
-        title: TextField(
-          keyboardType: TextInputType.text,
-          obscureText: true,
+        title: TextFormField(
           controller: _zuharController,
-          decoration: InputDecoration(hintText: 'zuhar'),
+          decoration: InputDecoration(
+              labelText: 'Zuhar', hintText: 'Enter timings (e.g. 1:30 pm)'),
+          validator: (value) => _validateTimings(value),
         ),
       ),
       ListTile(
         leading: ImageIcon(AssetImage("assets/ic_cloudy.png")),
-        title: TextField(
-          keyboardType: TextInputType.text,
-          obscureText: true,
+        title: TextFormField(
           controller: _asarController,
-          decoration: InputDecoration(hintText: 'asar'),
+          decoration: InputDecoration(
+              labelText: 'Asar', hintText: 'Enter timings (e.g. 5:15 pm)'),
+          validator: (value) => _validateTimings(value),
         ),
       ),
       ListTile(
         leading: ImageIcon(AssetImage("assets/ic_sunset.png")),
-        title: TextField(
-          keyboardType: TextInputType.text,
-          obscureText: true,
+        title: TextFormField(
           controller: _maghribController,
-          decoration: InputDecoration(hintText: 'maghrib'),
+          decoration: InputDecoration(
+              labelText: 'Maghrib', hintText: 'Enter timings (e.g. 6:30 pm)'),
+          validator: (value) => _validateTimings(value),
         ),
       ),
       ListTile(
         leading: ImageIcon(AssetImage("assets/ic_moon.png")),
-        title: TextField(
-          keyboardType: TextInputType.text,
-          obscureText: true,
+        title: TextFormField(
           controller: _ishaController,
-          decoration: InputDecoration(hintText: 'isha'),
+          decoration: InputDecoration(
+              labelText: 'Isha', hintText: 'Enter timings (e.g. 10:00 pm)'),
+          validator: (value) => _validateTimings(value),
         ),
+      ),
+      ListTile(
+        title: widget._isUpdate
+            ? new StreamBuilder(
+                stream: Firestore.instance.collection('mosques').snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return const Text('Loading...');
+                  return RaisedButton(
+                    textColor: Colors.white,
+                    onPressed: () {
+                      if (_formKey.currentState.validate()) {
+                        DocumentSnapshot ds;
+                        snapshot.data.documents.forEach((item) {
+                          if (item['name'] == widget._mosqueDetail.name)
+                            ds = item;
+                        });
+
+                        Firestore.instance.runTransaction((transaction) async {
+                          DocumentSnapshot freshSnap =
+                              await transaction.get(ds.reference);
+                          await transaction.update(freshSnap.reference, {
+                            'fajr': _fajarController.text,
+                          });
+                        });
+                        Scaffold.of(context).showSnackBar(
+                            SnackBar(content: Text('Timings updated')));
+                      }
+                    },
+                    child: Text('Update'),
+                  );
+                })
+            : RaisedButton(
+                textColor: Colors.white,
+                onPressed: () {
+                  if (_formKey.currentState.validate()) {
+                    Scaffold.of(context).showSnackBar(
+                        SnackBar(content: Text('Processing Data')));
+                  }
+                },
+                child: Text('Create'),
+              ),
       ),
     ];
   }

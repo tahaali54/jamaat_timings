@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:jamaat_timings/timings_page.dart';
 import 'package:jamaat_timings/update_page.dart';
 
+//CardView for mosque details
 class MosquesListItem extends StatelessWidget {
   MosquesListItem({
     Key key, @required this.mosqueDetail, @required this.isAdmin
@@ -105,7 +106,7 @@ class MosquesListItem extends StatelessWidget {
                       textColor: Theme.of(context).accentColor,
                       onPressed: () {
                         Navigator.push(context,
-                            MaterialPageRoute(builder: (context) => UpdatePage(pageTitle: 'Update Page')),);
+                            MaterialPageRoute(builder: (context) => UpdatePage(mosqueDetail: mosqueDetail, pageTitle: 'Update Page', isUpdate: true,)),);
                       },
                     ) :
                     new FlatButton(
