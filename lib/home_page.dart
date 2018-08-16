@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:jamaat_timings/models.dart';
 import 'package:jamaat_timings/controls.dart';
@@ -21,6 +22,7 @@ class HomePageState extends State<HomePage> {
   bool _isSynced;
   bool _createTable;
   bool _isLoading = false;
+  bool _isNetworkConnected;
 
   @override
   void initState() {
@@ -31,7 +33,8 @@ class HomePageState extends State<HomePage> {
     _isSynced = false;
     _isAdmin = false;
     //checking if data from Firestore has been synced previously.
-    initLocalStorage();
+    _initLocalStorage();
+    _checkNetworkConnection();
   }
 
   @override
@@ -41,50 +44,57 @@ class HomePageState extends State<HomePage> {
           ? FloatingActionButton(
               child: Icon(Icons.add),
               onPressed: () {
-                        Navigator.push(context,
-                            MaterialPageRoute(builder: (context) => UpdatePage(isUpdate: false, pageTitle: 'Create Page')),);
-                      },
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => UpdatePage(
+                          isUpdate: false, pageTitle: 'Create Page')),
+                );
+              },
             )
           : null,
       appBar: new AppBar(title: new Text("Jamaat Timings")),
       body: new Container(
         child: StreamBuilder(
-            stream: Firestore.instance.collection('mosques').snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData)
-                return Center(child: const CircularProgressIndicator());
-              else if (!_isSynced) {
-                _mosquesList.clear();
-                for (int i = 0; i < snapshot.data.documents.length; i++) {
-                  DocumentSnapshot document = snapshot.data.documents[i];
-                  _mosquesList.add(MosqueDetail(
-                      name: document['name'],
-                      imageUrl: document['image'],
-                      briefAddr: document['briefAddr'],
-                      addressLine1: document['addressLine1'],
-                      addressLine2: document['addressLine2'],
-                      fajr: document['fajr'],
-                      zuhar: document['zuhar'],
-                      asar: document['asar'],
-                      maghrib: document['maghrib'],
-                      isha: document['isha'],
-                      extra: document['extra']));
-                }
-                _persistentLocalStorage.setBool('isSynced', true);
-                _isSynced = true;
-                _dbContext.insertDataInDatabase(_mosquesList, _createTable);
-                _createTable = false;
-                return new MosquesList(
-                    mosquesList: _mosquesList, isAdmin: _isAdmin);
-              } else {
-                if (_mosquesList.isNotEmpty) {
-                  return new MosquesList(
-                      mosquesList: _mosquesList, isAdmin: _isAdmin);
-                } else {
-                  return new Center(child: const CircularProgressIndicator());
-                }
-              }
-            }),
+                stream: Firestore.instance.collection('mosques').snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData)
+                    return Center(child: const CircularProgressIndicator());
+                  else if(!_isSynced && !_isNetworkConnected)
+                    return Center(child: Text('No Internet. Please re-sync.'));
+                  else if (_isNetworkConnected) {
+                    _mosquesList.clear();
+                    for (int i = 0; i < snapshot.data.documents.length; i++) {
+                      DocumentSnapshot document = snapshot.data.documents[i];
+                      _mosquesList.add(MosqueDetail(
+                          name: document['name'],
+                          imageUrl: document['image'],
+                          briefAddr: document['briefAddr'],
+                          addressLine1: document['addressLine1'],
+                          addressLine2: document['addressLine2'],
+                          fajr: document['fajr'],
+                          zuhar: document['zuhar'],
+                          asar: document['asar'],
+                          maghrib: document['maghrib'],
+                          isha: document['isha'],
+                          extra: document['extra']));
+                    }
+                    _persistentLocalStorage.setBool('isSynced', true);
+                    _isSynced = true;
+                    _dbContext.insertDataInDatabase(_mosquesList, _createTable);
+                    _createTable = false;
+                    return new MosquesList(
+                        mosquesList: _mosquesList, isAdmin: _isAdmin);
+                  } else {
+                    if (_mosquesList.isNotEmpty) {
+                      return new MosquesList(
+                          mosquesList: _mosquesList, isAdmin: _isAdmin);
+                    } else {
+                      return new Center(
+                          child: const CircularProgressIndicator());
+                    }
+                  }
+                }),
       ),
       drawer: Drawer(
         child: ListView(
@@ -113,6 +123,7 @@ class HomePageState extends State<HomePage> {
                       ? const CircularProgressIndicator()
                       : new Container()),
               onTap: () {
+                _checkNetworkConnection();
                 setState(() {
                   _isLoading = true;
                   _persistentLocalStorage.setBool('isSynced', false);
@@ -215,7 +226,7 @@ class HomePageState extends State<HomePage> {
       });
   }
 
-  Future<Null> initLocalStorage() async {
+  Future<Null> _initLocalStorage() async {
     _persistentLocalStorage = await SharedPreferences.getInstance();
     _createTable = _persistentLocalStorage.getBool('createTable');
     _isSynced = _persistentLocalStorage.getBool('isSynced');
@@ -234,6 +245,24 @@ class HomePageState extends State<HomePage> {
         _mosquesList.clear();
         _mosquesList = x;
       });
+    }
+  }
+
+  _checkNetworkConnection() async {
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        print('connected');
+        setState(() {
+          _isNetworkConnected = true;
+        });
+      }
+    } on SocketException catch (_) {
+      setState(() {
+        _isNetworkConnected = false;
+      });
+
+      print('not connected');
     }
   }
 }
