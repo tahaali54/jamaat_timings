@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -45,6 +46,8 @@ class MosqueDetailFormState extends State<MosqueDetailForm> {
   TextEditingController _asarController = TextEditingController();
   TextEditingController _maghribController = TextEditingController();
   TextEditingController _ishaController = TextEditingController();
+
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -130,26 +133,12 @@ class MosqueDetailFormState extends State<MosqueDetailForm> {
                   if (!snapshot.hasData) return const Text('Loading...');
                   return RaisedButton(
                     textColor: Colors.white,
-                    onPressed: () {
-                      if (_formKey.currentState.validate()) {
-                        DocumentSnapshot ds;
-                        snapshot.data.documents.forEach((item) {
-                          if (item['name'] == widget._mosqueDetail.name)
-                            ds = item;
-                        });
-
-                        Firestore.instance.runTransaction((transaction) async {
-                          DocumentSnapshot freshSnap =
-                              await transaction.get(ds.reference);
-                          await transaction.update(freshSnap.reference, {
-                            'fajr': _fajarController.text,
-                          });
-                        });
-                        Scaffold.of(context).showSnackBar(
-                            SnackBar(content: Text('Timings updated')));
-                      }
-                    },
                     child: Text('Update'),
+                    onPressed: _isLoading
+                        ? null
+                        : () async {
+                            await _updateMosqueDetails(snapshot, context);
+                          },
                   );
                 })
             : RaisedButton(
@@ -164,5 +153,34 @@ class MosqueDetailFormState extends State<MosqueDetailForm> {
               ),
       ),
     ];
+  }
+
+  Future _updateMosqueDetails(
+      AsyncSnapshot snapshot, BuildContext context) async {
+    if (_formKey.currentState.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+      DocumentSnapshot ds;
+      snapshot.data.documents.forEach((item) {
+        if (item['name'] == widget._mosqueDetail.name) ds = item;
+      });
+      Firestore.instance.runTransaction((transaction) async {
+        DocumentSnapshot freshSnap = await transaction.get(ds.reference);
+        await transaction.update(freshSnap.reference, {
+          'fajr': _fajarController.text,
+          'zuhar': _zuharController.text,
+          'asar': _asarController.text,
+          'maghrib': _maghribController.text,
+          'isha': _ishaController.text,
+        });
+        Scaffold
+            .of(context)
+            .showSnackBar(SnackBar(content: Text('Timings updated')));
+        setState(() {
+          _isLoading = false;
+        });
+      });
+    }
   }
 }
