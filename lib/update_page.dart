@@ -47,6 +47,14 @@ class MosqueDetailFormState extends State<MosqueDetailForm> {
   TextEditingController _maghribController = TextEditingController();
   TextEditingController _ishaController = TextEditingController();
 
+  TextEditingController _briefAddrCtrl = TextEditingController();
+  TextEditingController _addrL1Ctrl = TextEditingController();
+  TextEditingController _addrL2Ctrl = TextEditingController();
+  TextEditingController _imgUrlCtrl = TextEditingController();
+  TextEditingController _nameController = TextEditingController();
+  TextEditingController _extraController = TextEditingController();
+  
+
   bool _isLoading = false;
 
   @override
@@ -72,6 +80,13 @@ class MosqueDetailFormState extends State<MosqueDetailForm> {
   }
 
   String _validateTimings(String value) {
+    if (value.isEmpty) {
+      return 'Please enter some text';
+    }
+    return null;
+  }
+
+  String _validateAddress(String value) {
     if (value.isEmpty) {
       return 'Please enter some text';
     }
@@ -123,6 +138,54 @@ class MosqueDetailFormState extends State<MosqueDetailForm> {
           decoration: InputDecoration(
               labelText: 'Isha', hintText: 'Enter timings (e.g. 10:00 pm)'),
           validator: (value) => _validateTimings(value),
+        ),
+      ),
+      widget._isUpdate ? Container() : ListTile(
+        title: TextFormField(
+          controller: _extraController,
+          decoration: InputDecoration(
+              labelText: 'Annoucements', hintText: 'Extra field for announcments'),
+          validator: (value) => _validateAddress(value),
+        ),
+      ),
+      widget._isUpdate ? Container() : ListTile(
+        title: TextFormField(
+          controller: _briefAddrCtrl,
+          decoration: InputDecoration(
+              labelText: 'Brief Address', hintText: 'Enter area name'),
+          validator: (value) => _validateAddress(value),
+        ),
+      ),
+      widget._isUpdate ? Container() : ListTile(
+        title: TextFormField(
+          controller: _addrL1Ctrl,
+          decoration: InputDecoration(
+              labelText: 'Address Line 1', hintText: 'Enter address specifics'),
+          validator: (value) => _validateAddress(value),
+        ),
+      ),
+      widget._isUpdate ? Container() : ListTile(
+        title: TextFormField(
+          controller: _addrL2Ctrl,
+          decoration: InputDecoration(
+              labelText: 'Address Line 2', hintText: 'Enter address broadly'),
+          validator: (value) => _validateAddress(value),
+        ),
+      ),
+      widget._isUpdate ? Container() : ListTile(
+        title: TextFormField(
+          controller: _imgUrlCtrl,
+          decoration: InputDecoration(
+              labelText: 'Image URL', hintText: 'Web hosted image url ending with file type'),
+          validator: (value) => _validateAddress(value),
+        ),
+      ),
+      widget._isUpdate ? Container() : ListTile(
+        title: TextFormField(
+          controller: _nameController,
+          decoration: InputDecoration(
+              labelText: 'Mosque Name', hintText: 'Enter name of mosque'),
+          validator: (value) => _validateAddress(value),
         ),
       ),
       ListTile(
