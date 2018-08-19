@@ -106,7 +106,7 @@ class MosquesListItem extends StatelessWidget {
                       textColor: Theme.of(context).accentColor,
                       onPressed: () {
                         Navigator.push(context,
-                            MaterialPageRoute(builder: (context) => UpdatePage(mosqueDetail: mosqueDetail, pageTitle: 'Update Page', isUpdate: true,)),);
+                            MaterialPageRoute(builder: (context) => UpdatePage(mosqueDetail: mosqueDetail, pageTitle: 'Update', isUpdate: true,)),);
                       },
                     ) :
                     new FlatButton(

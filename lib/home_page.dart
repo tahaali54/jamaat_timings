@@ -24,6 +24,11 @@ class HomePageState extends State<HomePage> {
   bool _isLoading = false;
   bool _isNetworkConnected;
 
+  //Search related properties
+  TextEditingController searchController = new TextEditingController();
+  String filter;
+  bool _searchOn = false;
+
   @override
   void initState() {
     super.initState();
@@ -32,9 +37,20 @@ class HomePageState extends State<HomePage> {
     _createTable = true;
     _isSynced = false;
     _isAdmin = false;
+    searchController.addListener(() {
+      setState(() {
+        filter = searchController.text;
+      });
+    });
     //checking if data from Firestore has been synced previously.
     _initLocalStorage();
     _checkNetworkConnection();
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -47,54 +63,128 @@ class HomePageState extends State<HomePage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => UpdatePage(
-                          isUpdate: false, pageTitle: 'Create Page')),
+                      builder: (context) =>
+                          UpdatePage(isUpdate: false, pageTitle: 'Create')),
                 );
               },
             )
           : null,
-      appBar: new AppBar(title: new Text("Jamaat Timings")),
+      appBar: new AppBar(
+        title: new Text("Jamaat Timings"),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.search),
+            onPressed: () {
+              setState(() {
+                _searchOn = true;
+              });
+            },
+          )
+        ],
+        bottom: _searchOn
+            ? PreferredSize(
+                preferredSize: Size.fromHeight(64.0),
+                child: ListTile(
+                  contentPadding:
+                      EdgeInsets.only(left: 16.0, bottom: 8.0, right: 0.0),
+                  title: TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: UnderlineInputBorder(),
+                        hintText: 'Search'),
+                  ),
+                  trailing: IconButton(
+                      color: Colors.white,
+                      icon: Icon(Icons.cancel),
+                      onPressed: () {
+                        searchController.clear();
+                        setState(() {
+                          _searchOn = false;
+                        });
+                      }),
+                ),
+              )
+            : PreferredSize(
+                child: Container(),
+                preferredSize: Size.fromHeight(0.0),
+              ),
+      ),
       body: new Container(
         child: StreamBuilder(
-                stream: Firestore.instance.collection('mosques').snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData)
-                    return Center(child: const CircularProgressIndicator());
-                  else if(!_isSynced && !_isNetworkConnected)
-                    return Center(child: Text('No Internet. Please re-sync.'));
-                  else if (_isNetworkConnected) {
-                    _mosquesList.clear();
-                    for (int i = 0; i < snapshot.data.documents.length; i++) {
-                      DocumentSnapshot document = snapshot.data.documents[i];
-                      _mosquesList.add(MosqueDetail(
-                          name: document['name'],
-                          imageUrl: document['image'],
-                          briefAddr: document['briefAddr'],
-                          addressLine1: document['addressLine1'],
-                          addressLine2: document['addressLine2'],
-                          fajr: document['fajr'],
-                          zuhar: document['zuhar'],
-                          asar: document['asar'],
-                          maghrib: document['maghrib'],
-                          isha: document['isha'],
-                          extra: document['extra']));
-                    }
-                    _persistentLocalStorage.setBool('isSynced', true);
-                    _isSynced = true;
-                    _dbContext.insertDataInDatabase(_mosquesList, _createTable);
-                    _createTable = false;
-                    return new MosquesList(
-                        mosquesList: _mosquesList, isAdmin: _isAdmin);
-                  } else {
-                    if (_mosquesList.isNotEmpty) {
-                      return new MosquesList(
-                          mosquesList: _mosquesList, isAdmin: _isAdmin);
-                    } else {
-                      return new Center(
-                          child: const CircularProgressIndicator());
-                    }
-                  }
-                }),
+            stream: Firestore.instance.collection('mosques').snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData)
+                return Center(child: const CircularProgressIndicator());
+              else if (!_isSynced && !_isNetworkConnected)
+                return Center(child: Text('No Internet. Please re-sync.'));
+              else if (_isNetworkConnected) {
+                _mosquesList.clear();
+                for (int i = 0; i < snapshot.data.documents.length; i++) {
+                  DocumentSnapshot document = snapshot.data.documents[i];
+                  _mosquesList.add(MosqueDetail(
+                      name: document['name'],
+                      imageUrl: document['image'],
+                      briefAddr: document['briefAddr'],
+                      addressLine1: document['addressLine1'],
+                      addressLine2: document['addressLine2'],
+                      fajr: document['fajr'],
+                      zuhar: document['zuhar'],
+                      asar: document['asar'],
+                      maghrib: document['maghrib'],
+                      isha: document['isha'],
+                      extra: document['extra']));
+                }
+                _persistentLocalStorage.setBool('isSynced', true);
+                _isSynced = true;
+                _dbContext.insertDataInDatabase(_mosquesList, _createTable);
+                _createTable = false;
+                return new MosquesList(
+                    mosquesList: filter == null || filter == ""
+                        ? _mosquesList
+                        : _mosquesList
+                            .where((item) =>
+                                item.name
+                                    .toLowerCase()
+                                    .contains(filter.toLowerCase()) ||
+                                item.briefAddr
+                                    .toLowerCase()
+                                    .contains(filter.toLowerCase()) ||
+                                item.addressLine1
+                                    .toLowerCase()
+                                    .contains(filter.toLowerCase()) ||
+                                item.addressLine2
+                                    .toLowerCase()
+                                    .contains(filter.toLowerCase()))
+                            .toList(),
+                    isAdmin: _isAdmin);
+              } else {
+                if (_mosquesList.isNotEmpty) {
+                  return new MosquesList(
+                      mosquesList: filter == null || filter == ""
+                          ? _mosquesList
+                          : _mosquesList
+                              .where((item) =>
+                                  item.name
+                                      .toLowerCase()
+                                      .contains(filter.toLowerCase()) ||
+                                  item.briefAddr
+                                      .toLowerCase()
+                                      .contains(filter.toLowerCase()) ||
+                                  item.addressLine1
+                                      .toLowerCase()
+                                      .contains(filter.toLowerCase()) ||
+                                  item.addressLine2
+                                      .toLowerCase()
+                                      .contains(filter.toLowerCase()))
+                              .toList(),
+                      isAdmin: _isAdmin);
+                } else {
+                  return new Center(child: const CircularProgressIndicator());
+                }
+              }
+            }),
       ),
       drawer: Drawer(
         child: ListView(
@@ -208,16 +298,28 @@ class HomePageState extends State<HomePage> {
                   ),
                 ),
                 actions: <Widget>[
-                  FlatButton(
-                    child: Text('Submit'),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      if (_passwordEditingController.text == '8242')
-                        setState(() {
-                          _isAdmin = _changedValue;
-                        });
-                    },
-                  )
+                  _isNetworkConnected ? StreamBuilder(
+                      stream: Firestore.instance
+                          .collection('passwords')
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData)
+                          return Text('Loading...');
+                        return FlatButton(
+                            child: Text('Submit'),
+                            onPressed: () {      
+                              DocumentSnapshot document = snapshot.data.documents[0];
+                              if (_passwordEditingController.text == document['password'])
+                              {
+                                Navigator.pop(context);
+                                setState(() {
+                                  _isAdmin = _changedValue;
+                                });
+                              }
+                              _passwordEditingController.clear();  
+                            },
+                          );
+                      }) : Container(),
                 ],
               ));
     else
