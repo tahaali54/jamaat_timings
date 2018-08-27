@@ -21,6 +21,7 @@
         <meta-data android:name="com.google.android.maps.v2.API_KEY" android:value="AIzaSyA3zwlbCmgQda_dCPDteQUMeNz4gelmMdg"/>
         <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version"/>
         <activity android:name="com.apptreesoftware.mapview.MapActivity" android:theme="@style/AppTheme"/>
+        <activity android:name=".MapsActivity" android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"

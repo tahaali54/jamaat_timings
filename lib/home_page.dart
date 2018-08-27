@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:jamaat_timings/models.dart';
 import 'package:jamaat_timings/controls.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -307,6 +308,8 @@ class HomePageState extends State<HomePage> {
               title: Text('About'),
               onTap: () {
                 Navigator.pop(context);
+                const MethodChannel methodChannel = const MethodChannel('com.faisalabid/maps');    
+                methodChannel.invokeMethod('launchMaps', {"lat": 37.4219999, "long": -122.0840575});
               },
             ),
           ],
