@@ -47,7 +47,7 @@ class HomePageState extends State<HomePage> {
       draggable: false, //Allows the user to move the marker.
     ),
   ];
-  
+
   DatabaseManager _dbContext;
   SharedPreferences _persistentLocalStorage;
   List<MosqueDetail> _mosquesList;
@@ -67,7 +67,7 @@ class HomePageState extends State<HomePage> {
     super.initState();
 
     cameraPosition = new CameraPosition(Locations.portland, 2.0);
-    
+
     _dbContext = DatabaseManager();
     _mosquesList = <MosqueDetail>[];
     _createTable = true;
@@ -335,28 +335,30 @@ class HomePageState extends State<HomePage> {
                   ),
                 ),
                 actions: <Widget>[
-                  _isNetworkConnected ? StreamBuilder(
-                      stream: Firestore.instance
-                          .collection('passwords')
-                          .snapshots(),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData)
-                          return Text('Loading...');
-                        return FlatButton(
-                            child: Text('Submit'),
-                            onPressed: () {      
-                              DocumentSnapshot document = snapshot.data.documents[0];
-                              if (_passwordEditingController.text == document['password'])
-                              {
-                                Navigator.pop(context);
-                                setState(() {
-                                  _isAdmin = _changedValue;
-                                });
-                              }
-                              _passwordEditingController.clear();  
-                            },
-                          );
-                      }) : Container(),
+                  _isNetworkConnected
+                      ? StreamBuilder(
+                          stream: Firestore.instance
+                              .collection('passwords')
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData) return Text('Loading...');
+                            return FlatButton(
+                              child: Text('Submit'),
+                              onPressed: () {
+                                DocumentSnapshot document =
+                                    snapshot.data.documents[0];
+                                if (_passwordEditingController.text ==
+                                    document['password']) {
+                                  Navigator.pop(context);
+                                  setState(() {
+                                    _isAdmin = _changedValue;
+                                  });
+                                }
+                                _passwordEditingController.clear();
+                              },
+                            );
+                          })
+                      : Container(),
                 ],
               ));
     else
@@ -398,7 +400,10 @@ class HomePageState extends State<HomePage> {
                 new Location(45.526607443935724, -122.66731660813093), 15.0),
             hideToolbar: false,
             title: "Mosque Locator"),
-        toolbarActions: [ToolbarAction("Refresh", 2), ToolbarAction("Close", 1),]);
+        toolbarActions: [
+          ToolbarAction("Refresh", 2),
+          ToolbarAction("Close", 1),
+        ]);
     StreamSubscription sub = mapView.onMapReady.listen((_) {
       mapView.setMarkers(_markers);
       mapView.zoomToFit(padding: 200);
@@ -421,6 +426,9 @@ class HomePageState extends State<HomePage> {
       print("Toolbar button id = $id");
       if (id == 1) {
         _handleDismiss();
+      }
+      if (id == 2) {
+        mapView.zoomToFit(padding: 200);
       }
     });
     compositeSubscription.add(sub);
