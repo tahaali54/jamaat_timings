@@ -6,6 +6,7 @@ import 'package:jamaat_timings/controls.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:jamaat_timings/update_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:map_view/map_view.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -15,6 +16,38 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
+  MapView mapView = new MapView();
+  CameraPosition cameraPosition;
+  var compositeSubscription = new CompositeSubscription();
+
+  //Marker bubble
+  List<Marker> _markers = <Marker>[
+    new Marker(
+      "1",
+      "Mosque Disco",
+      24.934748,
+      67.094518,
+      color: Colors.red,
+      draggable: false, //Allows the user to move the marker.
+    ),
+    new Marker(
+      "2",
+      "Mosque Askari",
+      24.900520,
+      67.117919,
+      color: Colors.red,
+      draggable: false, //Allows the user to move the marker.
+    ),
+    new Marker(
+      "3",
+      "Mosque TPS",
+      24.870722,
+      67.084503,
+      color: Colors.red,
+      draggable: false, //Allows the user to move the marker.
+    ),
+  ];
+  
   DatabaseManager _dbContext;
   SharedPreferences _persistentLocalStorage;
   List<MosqueDetail> _mosquesList;
@@ -32,6 +65,9 @@ class HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+
+    cameraPosition = new CameraPosition(Locations.portland, 2.0);
+    
     _dbContext = DatabaseManager();
     _mosquesList = <MosqueDetail>[];
     _createTable = true;
@@ -249,6 +285,7 @@ class HomePageState extends State<HomePage> {
               title: Text('Locator'),
               onTap: () {
                 Navigator.pop(context);
+                showMap();
               },
             ),
             ListTile(
@@ -350,6 +387,60 @@ class HomePageState extends State<HomePage> {
     }
   }
 
+  showMap() {
+    mapView.show(
+        new MapOptions(
+            mapViewType: MapViewType.normal,
+            showUserLocation: true,
+            showMyLocationButton: true,
+            showCompassButton: true,
+            initialCameraPosition: new CameraPosition(
+                new Location(45.526607443935724, -122.66731660813093), 15.0),
+            hideToolbar: false,
+            title: "Mosque Locator"),
+        toolbarActions: [ToolbarAction("Refresh", 2), ToolbarAction("Close", 1),]);
+    StreamSubscription sub = mapView.onMapReady.listen((_) {
+      mapView.setMarkers(_markers);
+      mapView.zoomToFit(padding: 200);
+    });
+    compositeSubscription.add(sub);
+    sub = mapView.onLocationUpdated.listen((location) {
+      print("Location updated $location");
+    });
+    compositeSubscription.add(sub);
+    sub = mapView.onTouchAnnotation
+        .listen((annotation) => print("annotation ${annotation.id} tapped"));
+    compositeSubscription.add(sub);
+    sub = mapView.onMapTapped
+        .listen((location) => print("Touched location $location"));
+    compositeSubscription.add(sub);
+    sub = mapView.onCameraChanged.listen((cameraPosition) =>
+        this.setState(() => this.cameraPosition = cameraPosition));
+    compositeSubscription.add(sub);
+    sub = mapView.onToolbarAction.listen((id) {
+      print("Toolbar button id = $id");
+      if (id == 1) {
+        _handleDismiss();
+      }
+    });
+    compositeSubscription.add(sub);
+    sub = mapView.onInfoWindowTapped.listen((marker) {
+      print("Info Window Tapped for ${marker.title}");
+    });
+    compositeSubscription.add(sub);
+  }
+
+  _handleDismiss() async {
+    double zoomLevel = await mapView.zoomLevel;
+    Location centerLocation = await mapView.centerLocation;
+    List<Marker> visibleAnnotations = await mapView.visibleAnnotations;
+    print("Zoom Level: $zoomLevel");
+    print("Center: $centerLocation");
+    print("Visible Annotation Count: ${visibleAnnotations.length}");
+    mapView.dismiss();
+    compositeSubscription.cancel();
+  }
+
   _checkNetworkConnection() async {
     try {
       final result = await InternetAddress.lookup('google.com');
@@ -425,5 +516,36 @@ class MosquesList extends StatelessWidget {
             ),
           );
         }).toList());
+  }
+}
+
+class CompositeSubscription {
+  Set<StreamSubscription> _subscriptions = new Set();
+
+  void cancel() {
+    for (var n in this._subscriptions) {
+      n.cancel();
+    }
+    this._subscriptions = new Set();
+  }
+
+  void add(StreamSubscription subscription) {
+    this._subscriptions.add(subscription);
+  }
+
+  void addAll(Iterable<StreamSubscription> subs) {
+    _subscriptions.addAll(subs);
+  }
+
+  bool remove(StreamSubscription subscription) {
+    return this._subscriptions.remove(subscription);
+  }
+
+  bool contains(StreamSubscription subscription) {
+    return this._subscriptions.contains(subscription);
+  }
+
+  List<StreamSubscription> toList() {
+    return this._subscriptions.toList();
   }
 }

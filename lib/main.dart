@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:jamaat_timings/home_page.dart';
+import 'package:map_view/map_view.dart';
+
+const API_KEY = "AIzaSyA3zwlbCmgQda_dCPDteQUMeNz4gelmMdg";
 
 void main() {
+  MapView.setApiKey(API_KEY);
   runApp(new JamaatTimings());
 }
 
