@@ -1,4 +1,3 @@
-import 'package:jamaat_timings/controls.dart';
 import 'package:jamaat_timings/models.dart';
 
 abstract class Routes {

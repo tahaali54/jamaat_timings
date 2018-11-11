@@ -10,8 +10,8 @@ void main() {
 }
 
 class JamaatTimings extends StatelessWidget {
-  Color _primaryColor = Color.fromARGB(255, 76, 27, 83);
-  Color _accentColor = Color.fromARGB(255, 227, 171, 120);
+  final Color _primaryColor = Color.fromARGB(255, 76, 27, 83);
+  final Color _accentColor = Color.fromARGB(255, 227, 171, 120);
 
   @override
   Widget build(BuildContext context) {
