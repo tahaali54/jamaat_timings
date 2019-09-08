@@ -34,7 +34,7 @@ class MosquesListItem extends StatelessWidget {
             children: <Widget>[
               // photo and title
               new SizedBox(
-                height: 184.0,
+                height: 183.0,
                 child: new Stack(
                   children: <Widget>[
                     new Positioned.fill(
